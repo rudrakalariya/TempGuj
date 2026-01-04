@@ -76,11 +76,13 @@ You can modify the following settings in `gujarati_speech_to_text.py`:
 - `RECORDING_DURATION`: How long to record (default: 5 seconds)
 - `SAMPLE_RATE`: Audio sample rate (default: 16000 Hz - recommended for Whisper)
 - `MODEL_NAME`: Whisper model to use:
-  - `tiny`: Fastest, least accurate
-  - `base`: Good balance (default)
-  - `small`: Better accuracy, slower
-  - `medium`: High accuracy, slower
-  - `large`: Best accuracy, slowest
+  - `tiny`: Fastest, least accurate (often outputs Latin script for Gujarati)
+  - `base`: Good balance (often outputs Latin script for Gujarati)
+  - `small`: Better accuracy, better Gujarati script support (default)
+  - `medium`: High accuracy, best Gujarati script support, slower
+  - `large`: Best accuracy, best Gujarati script support, slowest
+  
+  **Important**: Smaller models (tiny, base) often output Gujarati in Latin/Romanized script instead of Gujarati script. For proper Gujarati script output, use `small`, `medium`, or `large` models.
 
 ## Example Output
 
@@ -142,6 +144,12 @@ You can modify the following settings in `gujarati_speech_to_text.py`:
 - Reduce background noise
 - Try using a larger Whisper model (small, medium, or large)
 - Increase recording duration if needed
+
+### Gujarati text appears in Latin/Romanized script instead of Gujarati script
+This is a known limitation with smaller Whisper models (tiny, base). To get proper Gujarati script output:
+- **Use a larger model**: Change `MODEL_NAME` to `'small'`, `'medium'`, or `'large'` in the configuration
+- The `small` model is the recommended minimum for Gujarati script output
+- Larger models require more processing time and memory but produce better results
 
 ## License
 

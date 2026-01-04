@@ -65,19 +65,20 @@ def save_audio_temp(audio_data, sample_rate):
     return temp_path
 
 
-def transcribe_audio(audio_path, model_name='base'):
+def transcribe_audio(audio_path, model_name='small'):
     """
     Transcribe audio file to Gujarati text using Whisper.
     
     Args:
         audio_path (str): Path to the audio file
         model_name (str): Whisper model to use (tiny, base, small, medium, large)
-                         Default: 'base' (good balance between speed and accuracy)
+                         Default: 'small' (better Gujarati script support than base)
     
     Returns:
-        str: Transcribed Gujarati text
+        tuple: (transcribed_text, language_detected)
     """
     print(f"📝 Loading Whisper model '{model_name}'...")
+    print("   (Note: Larger models like 'small' or 'medium' produce better Gujarati script output)\n")
     
     # Load Whisper model
     model = whisper.load_model(model_name)
@@ -88,13 +89,19 @@ def transcribe_audio(audio_path, model_name='base'):
     result = model.transcribe(
         audio_path,
         language="gu",  # Gujarati language code
-        task="transcribe"  # Transcribe (not translate)
+        task="transcribe",  # Transcribe (not translate)
+        fp16=False,  # Use FP32 for CPU (avoids warning)
+        verbose=False  # Reduce verbose output
     )
     
-    # Extract the transcribed text
+    # Extract the transcribed text and detected language
     transcribed_text = result["text"].strip()
+    detected_language = result.get("language", "unknown")
     
-    return transcribed_text
+    # Show language detection info
+    print(f"📊 Detected language: {detected_language}")
+    
+    return transcribed_text, detected_language
 
 
 def main():
@@ -109,7 +116,9 @@ def main():
     # Configuration
     RECORDING_DURATION = 5  # seconds
     SAMPLE_RATE = 16000  # Hz (16kHz - preferred for Whisper)
-    MODEL_NAME = 'base'  # Whisper model: tiny, base, small, medium, large
+    # Note: Use 'small', 'medium', or 'large' for better Gujarati script output
+    # 'base' and 'tiny' models often output Gujarati in Latin/Romanized script
+    MODEL_NAME = 'small'  # Whisper model: tiny, base, small, medium, large
     
     audio_path = None
     
@@ -125,14 +134,22 @@ def main():
         print(f"💾 Audio saved to temporary file: {audio_path}\n")
         
         # Step 3: Transcribe audio to Gujarati text
-        transcribed_text = transcribe_audio(audio_path, model_name=MODEL_NAME)
+        transcribed_text, detected_lang = transcribe_audio(audio_path, model_name=MODEL_NAME)
         
         # Step 4: Display results
+        print("\n" + "=" * 60)
+        print("  TRANSCRIPTION RESULT")
         print("=" * 60)
-        print("  TRANSCRIPTION RESULT (Gujarati)")
-        print("=" * 60)
-        print(f"\n{transcribed_text}\n")
-        print("=" * 60)
+        print(f"Detected Language: {detected_lang}")
+        print(f"Output Text:\n")
+        print(transcribed_text)
+        print("\n" + "=" * 60)
+        
+        # Check if output appears to be in Latin script (common issue with smaller models)
+        if detected_lang == "gu" and not any('\u0a80' <= char <= '\u0aff' for char in transcribed_text):
+            print("\n⚠️  WARNING: Output appears to be in Latin/Romanized script, not Gujarati script.")
+            print("   Try using a larger model (small, medium, or large) for better Gujarati script output.")
+            print("   You can change MODEL_NAME in the configuration section.\n")
         
         # Optional: Save transcription to file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

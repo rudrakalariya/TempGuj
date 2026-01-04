@@ -72,26 +72,33 @@ def transcribe_audio(audio_path, model_name='medium'):
     Args:
         audio_path (str): Path to the audio file
         model_name (str): Whisper model to use (tiny, base, small, medium, large)
-                         Default: 'medium' (recommended for Gujarati script output)
+                         Default: 'medium' (good balance between speed and accuracy)
     
     Returns:
         tuple: (transcribed_text, language_detected)
     """
     print(f"📝 Loading Whisper model '{model_name}'...")
-    print("   (Note: 'medium' or 'large' models are recommended for proper Gujarati script output)\n")
+    print("   (Note: 'medium' or 'large' models are recommended for Gujarati script output)\n")
+    print("   Using initial prompt to guide model to output in Gujarati script...")
     
     # Load Whisper model
     model = whisper.load_model(model_name)
     
     print("🔄 Transcribing audio to Gujarati text...\n")
     
-    # Transcribe with explicit language setting
+    # Initial prompt in Gujarati script to guide the model
+    # This helps Whisper understand we want output in Gujarati script, not other scripts
+    initial_prompt = "આ ગુજરાતી ભાષા છે. ગુજરાતી લિપિમાં ટ્રાન્સક્રિપ્શન આપો."
+    
+    # Transcribe with explicit language setting and initial prompt
     result = model.transcribe(
         audio_path,
-        language="gu",  # Gujarati language code
-        task="transcribe",  # Transcribe (not translate)
+        language="gu",  # Explicitly specify Gujarati language
+        task="transcribe",  # Transcribe (not translate) to Gujarati
+        initial_prompt=initial_prompt,  # Guide model to use Gujarati script
         fp16=False,  # Use FP32 for CPU (avoids warning)
-        verbose=False  # Reduce verbose output
+        verbose=False,  # Reduce verbose output
+        condition_on_previous_text=False  # Don't condition on previous text (helps with script consistency)
     )
     
     # Extract the transcribed text and detected language
@@ -117,9 +124,10 @@ def main():
     RECORDING_DURATION = 5  # seconds
     SAMPLE_RATE = 16000  # Hz (16kHz - preferred for Whisper)
     # IMPORTANT: For proper Gujarati script output, 'medium' or 'large' models are recommended
-    # 'small' model may still output in wrong script (Telugu/Latin/Devanagari)
-    # 'tiny' and 'base' models almost always fail to produce Gujarati script
-    MODEL_NAME = 'medium'  # Whisper model: tiny, base, small, medium, large (recommended: medium or large)
+    # 'medium' model is a good balance between speed and accuracy
+    # 'large' model is most reliable but slower
+    # 'small', 'base', and 'tiny' models almost always fail to produce Gujarati script
+    MODEL_NAME = 'medium'  # Whisper model: tiny, base, small, medium, large (default: medium - good balance)
     
     audio_path = None
     
@@ -166,8 +174,8 @@ def main():
                 print("   Detected: Latin/Romanized script instead of Gujarati script.")
             
             print("\n   SOLUTIONS:")
-            print("   1. Try a LARGER model: Change MODEL_NAME to 'medium' or 'large'")
-            print("      (The 'small' model may still produce incorrect script for Gujarati)")
+            print("   1. Try 'large' model: Change MODEL_NAME to 'large' (most reliable for Gujarati)")
+            print("      (If 'medium' fails, 'large' model has best script accuracy)")
             print("   2. Ensure you're speaking clearly in Gujarati")
             print("   3. This is a known Whisper limitation with Gujarati language")
             print("   4. Consider using Whisper 'medium' or 'large' model for better results\n")

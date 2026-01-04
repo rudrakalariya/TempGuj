@@ -65,20 +65,20 @@ def save_audio_temp(audio_data, sample_rate):
     return temp_path
 
 
-def transcribe_audio(audio_path, model_name='small'):
+def transcribe_audio(audio_path, model_name='medium'):
     """
     Transcribe audio file to Gujarati text using Whisper.
     
     Args:
         audio_path (str): Path to the audio file
         model_name (str): Whisper model to use (tiny, base, small, medium, large)
-                         Default: 'small' (better Gujarati script support than base)
+                         Default: 'medium' (recommended for Gujarati script output)
     
     Returns:
         tuple: (transcribed_text, language_detected)
     """
     print(f"📝 Loading Whisper model '{model_name}'...")
-    print("   (Note: Larger models like 'small' or 'medium' produce better Gujarati script output)\n")
+    print("   (Note: 'medium' or 'large' models are recommended for proper Gujarati script output)\n")
     
     # Load Whisper model
     model = whisper.load_model(model_name)
@@ -116,9 +116,10 @@ def main():
     # Configuration
     RECORDING_DURATION = 5  # seconds
     SAMPLE_RATE = 16000  # Hz (16kHz - preferred for Whisper)
-    # Note: Use 'small', 'medium', or 'large' for better Gujarati script output
-    # 'base' and 'tiny' models often output Gujarati in Latin/Romanized script
-    MODEL_NAME = 'small'  # Whisper model: tiny, base, small, medium, large
+    # IMPORTANT: For proper Gujarati script output, 'medium' or 'large' models are recommended
+    # 'small' model may still output in wrong script (Telugu/Latin/Devanagari)
+    # 'tiny' and 'base' models almost always fail to produce Gujarati script
+    MODEL_NAME = 'medium'  # Whisper model: tiny, base, small, medium, large (recommended: medium or large)
     
     audio_path = None
     
@@ -145,11 +146,31 @@ def main():
         print(transcribed_text)
         print("\n" + "=" * 60)
         
-        # Check if output appears to be in Latin script (common issue with smaller models)
-        if detected_lang == "gu" and not any('\u0a80' <= char <= '\u0aff' for char in transcribed_text):
-            print("\n⚠️  WARNING: Output appears to be in Latin/Romanized script, not Gujarati script.")
-            print("   Try using a larger model (small, medium, or large) for better Gujarati script output.")
-            print("   You can change MODEL_NAME in the configuration section.\n")
+        # Check if output is in the correct script (Gujarati Unicode range: U+0A80 to U+0AFF)
+        has_gujarati_script = any('\u0a80' <= char <= '\u0aff' for char in transcribed_text)
+        
+        # Detect other common scripts that might appear incorrectly
+        has_telugu_script = any('\u0c00' <= char <= '\u0c7f' for char in transcribed_text)
+        has_devanagari_script = any('\u0900' <= char <= '\u097f' for char in transcribed_text)
+        has_tamil_script = any('\u0b80' <= char <= '\u0bff' for char in transcribed_text)
+        
+        if detected_lang == "gu" and not has_gujarati_script:
+            print("\n⚠️  WARNING: Output is NOT in Gujarati script!")
+            if has_telugu_script:
+                print("   Detected: Telugu script instead of Gujarati script.")
+            elif has_devanagari_script:
+                print("   Detected: Devanagari script instead of Gujarati script.")
+            elif has_tamil_script:
+                print("   Detected: Tamil script instead of Gujarati script.")
+            else:
+                print("   Detected: Latin/Romanized script instead of Gujarati script.")
+            
+            print("\n   SOLUTIONS:")
+            print("   1. Try a LARGER model: Change MODEL_NAME to 'medium' or 'large'")
+            print("      (The 'small' model may still produce incorrect script for Gujarati)")
+            print("   2. Ensure you're speaking clearly in Gujarati")
+            print("   3. This is a known Whisper limitation with Gujarati language")
+            print("   4. Consider using Whisper 'medium' or 'large' model for better results\n")
         
         # Optional: Save transcription to file
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")

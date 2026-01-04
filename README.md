@@ -76,13 +76,13 @@ You can modify the following settings in `gujarati_speech_to_text.py`:
 - `RECORDING_DURATION`: How long to record (default: 5 seconds)
 - `SAMPLE_RATE`: Audio sample rate (default: 16000 Hz - recommended for Whisper)
 - `MODEL_NAME`: Whisper model to use:
-  - `tiny`: Fastest, least accurate (often outputs Latin script for Gujarati)
-  - `base`: Good balance (often outputs Latin script for Gujarati)
-  - `small`: Better accuracy, better Gujarati script support (default)
-  - `medium`: High accuracy, best Gujarati script support, slower
-  - `large`: Best accuracy, best Gujarati script support, slowest
+  - `tiny`: Fastest, least accurate (almost never outputs correct Gujarati script)
+  - `base`: Good balance (rarely outputs correct Gujarati script)
+  - `small`: Better accuracy, but may output wrong script (Telugu/Devanagari/Latin)
+  - `medium`: High accuracy, best for Gujarati script (default, recommended)
+  - `large`: Best accuracy, best Gujarati script support, slowest (most reliable)
   
-  **Important**: Smaller models (tiny, base) often output Gujarati in Latin/Romanized script instead of Gujarati script. For proper Gujarati script output, use `small`, `medium`, or `large` models.
+  **CRITICAL**: For proper Gujarati script output, use `medium` or `large` models. Smaller models (`tiny`, `base`, `small`) often output Gujarati in wrong scripts (Telugu, Devanagari, or Latin) instead of Gujarati script. This is a known limitation of Whisper with Gujarati language.
 
 ## Example Output
 
@@ -145,11 +145,14 @@ You can modify the following settings in `gujarati_speech_to_text.py`:
 - Try using a larger Whisper model (small, medium, or large)
 - Increase recording duration if needed
 
-### Gujarati text appears in Latin/Romanized script instead of Gujarati script
-This is a known limitation with smaller Whisper models (tiny, base). To get proper Gujarati script output:
-- **Use a larger model**: Change `MODEL_NAME` to `'small'`, `'medium'`, or `'large'` in the configuration
-- The `small` model is the recommended minimum for Gujarati script output
-- Larger models require more processing time and memory but produce better results
+### Gujarati text appears in wrong script (Telugu/Devanagari/Latin instead of Gujarati)
+This is a known limitation with Whisper models for Gujarati language. To get proper Gujarati script output:
+- **Use 'medium' or 'large' model**: Change `MODEL_NAME` to `'medium'` or `'large'` in the configuration
+- The `small` model may still output in wrong scripts (Telugu, Devanagari, or Latin)
+- `medium` model is the recommended minimum for reliable Gujarati script output
+- `large` model provides the best accuracy and most reliable Gujarati script output
+- Larger models require more processing time and memory but produce correct results
+- This is a known issue with Whisper's handling of Gujarati language
 
 ## License
 
